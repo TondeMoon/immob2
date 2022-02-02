@@ -34,46 +34,44 @@ let link2 = '?group=1'
       height: 900,
     })
 
-    while (flag) {
-      await page.goto(`${link1}${counter}${link2}`, { waitUntil: 'domcontentloaded' })
-      await page.waitForSelector('div.filter-results-holder')
-      console.log(counter)
+    // while (flag) {
+    //   await page.goto(`${link1}${counter}${link2}`, { waitUntil: 'domcontentloaded' })
+    //   await page.waitForSelector('div.filter-results-holder')
+    //   console.log(counter)
 
-      let html = await page.evaluate(
-        async () => {
-          let page = []
-          try {
-            let divs = await document.querySelectorAll('div.filter-item-container')
-            console.log(divs)
+    //   let html = await page.evaluate(
+    //     async () => {
+    //       let page = []
+    //       try {
+    //         let divs = await document.querySelectorAll('div.filter-item-container')
+    //         console.log(divs)
 
-            divs.forEach((div) => {
-              let obj = div.querySelector('a')?.href
-              if (obj) {
-                page.push(obj)
-              }
-            })
-          } catch (e) {
-            console.log(e)
-          }
-          return page
-        },
-        { waitUntil: 'div.filter-results-holder' }
-      )
+    //         divs.forEach((div) => {
+    //           let obj = div.querySelector('a')?.href
+    //           if (obj) {
+    //             page.push(obj)
+    //           }
+    //         })
+    //       } catch (e) {
+    //         console.log(e)
+    //       }
+    //       return page
+    //     },
+    //     { waitUntil: 'div.filter-results-holder' }
+    //   )
 
-      await res.push(html)
+    //   await res.push(html)
 
-      if (counter >= maxPage) {
-        flag = false
-      }
-      counter++
-    }
+    //   if (counter >= maxPage) {
+    //     flag = false
+    //   }
+    //   counter++
+    // }
 
-    res = res.flat()
+    //res = res.flat()
 
     // test webpage for parsing single house page
-    // let res = [
-    //   'https://www.immobilier.ch/en/buy/apartment/valais/verbier/agence-eugster-147/girolles-b40-verbier-644476',
-    // ]
+    let res = ['https://www.immobilier.ch/en/buy/house/valais/verbier/vfp-immobilier-222/big-tave-659210']
 
     let homes = []
 
@@ -81,55 +79,64 @@ let link2 = '?group=1'
       await page.goto(res[i], { waitUntil: 'load' })
       let html = await page.evaluate(
         async () => {
+          window.scrollBy(0, window.innerHeight)
           let page = []
           try {
-            // let lis = await document.querySelectorAll('li.im__table__row')
-            // console.log(lis)
-
-            // lis.forEach((div) => {
-            //   let obj = div.querySelector('span.im__assets__title')?.innerText
-            //   if (obj) {
-            //     page.push(obj)
-            //   }
-            // })
             let mainBlock = await document.querySelector('section.im__col')
             let titleAndDesc = await document.querySelector('div.im__postContent__body')
             let mainFeatures = await document.querySelectorAll('ul.im__characteristic-list')
             let agency = await document.querySelector('div.im__col-content')
-            let imgContainer = await document.querySelectorAll('div.im__row')
+            let imgContainer = await document.querySelectorAll('div.im__banner__slide')
+            let mapContainer = await document.querySelector('div.mapContainer')
 
-            let images = []
+            // let images = []
 
-            imgContainer.forEach((el) => {
-              images.push(el.querySelector('img')?.src)
-            })
+            // imgContainer.forEach((el) => {
+            //   const imagesrc = el.querySelector('img.valign--top')?.src
+            //   images.push(imagesrc)
+            //   console.log(imagesrc)
+            // })
 
-            console.log(imgContainer)
+            // console.log(imgContainer)
 
             // mainFeatures.forEach((el) => {
             //   let obj = el.querySelector('li')?.innerHTML
             //   page.push(obj)
             // })
 
+            let lis = await document.querySelectorAll('ul.im__table')[1].textContent
+
+            // let featuresArr = []
+
+            // lis.forEach((div) => {
+            //   let obj = div.querySelector('span.im__assets__title')?.innerText
+            //   if (obj) {
+            //     featuresArr.push(obj)
+            //   }
+            // })
+
             let obj2 = {
-              title: mainBlock.querySelector('h1').innerText,
               address: mainBlock.querySelector('div.object-address').innerText,
               price: mainBlock.querySelector('h2').innerText,
-              titleNice: titleAndDesc.querySelector('h2').innerText,
-              desc: titleAndDesc.querySelector('p').innerText,
+              title: titleAndDesc.querySelector('h2').innerText,
+              features: lis.toString().trim(),
+              desc: Array.from(titleAndDesc.querySelectorAll('p'))
+                .map((x) => x.innerText)
+                .toString(),
               agency: agency.querySelector('strong').innerText,
               agentAdress: agency.querySelector('address').innerText,
               businessPhone: agency.querySelector('a.im__btn').getAttribute('data-tel-num'),
               agencyWebSite: agency.querySelector('a.link-detail-agency-url').href,
+              agentName: agency.querySelector('span.small-title')?.nextSibling?.innerText,
+              coords: `${mapContainer?.getAttribute('_centerx')}, ${mapContainer?.getAttribute('_centery')}`,
             }
-
-            page.push(images)
+            page.push(obj2)
           } catch (e) {
             console.log(e)
           }
           return page
         },
-        { waitUntil: 'section.im__block' }
+        { waitUntil: 'div.im__row__assestGallery' }
       )
       await homes.push(html)
       // await newPage.close()
@@ -139,11 +146,11 @@ let link2 = '?group=1'
 
     // await browser.close()
 
-    // fs.writeFile('homes.json', JSON.stringify({ data: res }), (err) => {
-    //   if (err) throw err
-    //   console.log('homes.json saved')
-    //   console.log('homes.json length - ', res.length)
-    // })
+    fs.writeFile('homes.json', JSON.stringify({ data: homes }), (err) => {
+      if (err) throw err
+      console.log('homes.json saved')
+      console.log('homes.json length - ', res.length)
+    })
 
     //   res = res.flat()
 
