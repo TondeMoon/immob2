@@ -1,7 +1,42 @@
 const mongoose = require('mongoose')
 
-const eventSchema = mongoose.Schema({
-  data: Array,
+const homesSc = mongoose.Schema({
+  id: Number,
+  // type: { type: String, enum: ['HOUSE', 'APARTMENTS', 'CHALET'] },
+  type: String,
+  title: String,
+  images: Array,
+  agent: Object,
+  agentName: String,
+  agencyReference: String,
+  reference: String,
+  agency: String,
+  agentCity: String,
+  features: String,
+  agentAdress: String,
+  businessPhone: String,
+  availableFrom: String,
+  agencyWebSite: String,
+  address: String,
+  country: String,
+  coords: String,
+  floor: Number | String,
+  floors: Number,
+  square: Number,
+  livingSq: Number,
+  rooms: Number,
+  area: Number,
+  desc: String,
+  price: Number | String,
+  currency: String,
+  created: String,
+  modified: String,
+  baths: Number,
+  beds: Number,
+  link: String,
+  source: String,
+  yearBuilt: Number,
+  yearRenovated: Number,
 })
 
-module.exports = mongoose.model('homeCollection', eventSchema)
+module.exports = mongoose.model('swissHTMLCollection', homesSc)
