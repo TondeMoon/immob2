@@ -1,9 +1,5 @@
-const fs = require('fs')
 const puppeteer = require('puppeteer')
-const mongoose = require('mongoose')
 const { scrollPageToBottom } = require('puppeteer-autoscroll-down')
-
-const homesSc = require('./homeSchema')
 
 const parsingObject = {
   link1:
@@ -123,18 +119,7 @@ const parsingObject = {
   source: 'Swiss Fine Properties',
 }
 
-mongoose
-  .connect(
-    'mongodb+srv://tondeMoon:T2bSJN7zck4qWy9@cluster0.k1gks.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
-    { useNewUrlParser: true, useUnifiedTopology: true }
-  )
-  .then(() => {
-    console.log('mongo connected')
-  })
-  .catch((err) => {
-    console.log('mongo not connected')
-  })
-;(async () => {
+const getHTMLData = async () => {
   let flag = true
   let res = []
   let counter = 1
@@ -143,7 +128,7 @@ mongoose
     let browser = await puppeteer.launch({
       headless: true,
       devtools: true,
-      // slowMo: 500,
+      slowMo: 500,
     })
     let page = await browser.newPage()
     await page.setViewport({
@@ -171,7 +156,6 @@ mongoose
         let page = []
         try {
           let divs = document.querySelectorAll(parsingObject.allLinks.selector)
-          console.log(divs)
 
           divs.forEach((div) => {
             let obj = div.querySelector(parsingObject.allLinks.inner.selector)?.href
@@ -191,18 +175,9 @@ mongoose
         flag = false
       }
       counter++
-      console.log(counter)
     }
 
     res = res.flat()
-    console.log(res)
-
-    // test webpage for parsing single house page
-    // let res = [
-    //   'https://www.swissfineproperties.com/luxury/flat-for+sale-bruson-723476.html?pos=69',
-    //   'https://www.swissfineproperties.com/luxury/flat-for+sale-bruson-747241.html?pos=70',
-    //   'https://www.swissfineproperties.com/luxury/penthouse-for+sale-la+tzoumaz-697198.html?pos=71',
-    // ]
 
     let homes = []
 
@@ -210,7 +185,6 @@ mongoose
 
     for (let i = 0; i < res.length; i++) {
       await page.goto(res[i], { waitUntil: 'load' })
-      console.log(res[i], i)
       await scrollPageToBottom(page, {
         size: 500,
         delay: 250,
@@ -394,29 +368,14 @@ mongoose
       homes.push(html)
       // await newPage.close()
     }
-
-    console.log(homes)
-
     // await browser.close()
 
     homes = homes.flat()
-
-    fs.writeFile('homes.json', JSON.stringify(homes), (err) => {
-      if (err) throw err
-      console.log('homes.json saved')
-      console.log('homes.json length - ', res.length)
-    })
-
-    homesSc
-      .insertMany(homes)
-      .then(() => {
-        console.log('homes saved')
-      })
-      .catch((err) => {
-        console.log('homes not saved', err)
-      })
+    return homes
   } catch (e) {
     console.log(e)
     //await browser.close()
   }
-})()
+}
+
+module.exports = getHTMLData
